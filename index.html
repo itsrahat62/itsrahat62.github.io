@@ -441,7 +441,12 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
 }
 @media (max-width:720px){
   .suites{grid-template-columns:1fr}
-  .nav a:not(.hire):not(.keep){display:none}
+  .nav{gap:0;padding:4px;top:10px}
+  .nav a{padding:8px 7px;font-size:10px;letter-spacing:.05em}
+  .pscreen{aspect-ratio:1/1}
+  .player.app .pstage{aspect-ratio:3/4}
+  .chip{padding:8px 14px;font-size:13px}
+  .chip.cat{font-size:10px}
   .hero-sub{left:var(--gutter)}
   .more a{grid-template-columns:40px minmax(0,1fr)}
   .more .lang{display:none}
@@ -921,7 +926,7 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     </div>
     <div class="links">
       <a href="https://wa.me/8801767552562" target="_blank" rel="noopener" class="wa"><svg class="ico"><use href="#i-whatsapp"/></svg><span>WhatsApp<b>+880 1767-552562</b></span>↗</a>
-      <a href="mailto:rokonujjamanrahat.sub@gmail.com"><svg class="ico"><use href="#i-mail"/></svg><span>Email<b>rokonujjamanrahat.sub</b></span>↗</a>
+      <a href="mailto:rokonujjamanrahat.sub@gmail.com"><svg class="ico"><use href="#i-mail"/></svg><span>Email<b>rokonujjamanrahat.sub@gmail.com</b></span>↗</a>
       <a href="https://www.linkedin.com/in/mdrokonujjaman/" target="_blank" rel="noopener"><svg class="ico"><use href="#i-linkedin"/></svg><span>LinkedIn<b>/in/mdrokonujjaman</b></span>↗</a>
       <a href="https://github.com/itsrahat62" target="_blank" rel="noopener"><svg class="ico"><use href="#i-github"/></svg><span>GitHub<b>@itsrahat62</b></span>↗</a>
       <a href="https://maps.google.com/?q=Mohammadpur,Dhaka" target="_blank" rel="noopener"><svg class="ico"><use href="#i-pin"/></svg><span>Based in<b>Mohammadpur, Dhaka</b></span>↗</a>
@@ -1297,16 +1302,25 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
     const cursor = el.querySelector('.pcursor'), ripple = el.querySelector('.pripple'), cap = el.querySelector('.pcap'), ctl = el.querySelector('.pctl');
     let i = 0, playing = false, inView = false, userPaused = reduce, timers = [];
     const clear = () => { timers.forEach(clearTimeout); timers = []; };
+    const screen = el.querySelector('.pscreen');
+    // On narrow screens the frame is cropped (object-fit: cover) around the point of interest,
+    // so map that point from frame percent to on-screen percent.
+    const at = f => {
+      const c = screen.getBoundingClientRect(), s = Math.max(c.width / 1280, c.height / 800) || 1;
+      const W = 1280 * s, H = 800 * s;
+      return { x: (f.x / 100 * W - (W - c.width) * f.x / 100) / c.width * 100, y: (f.y / 100 * H - (H - c.height) * f.y / 100) / c.height * 100 };
+    };
 
     function show(n) {
       clear();
       i = (n + frames.length) % frames.length;
-      const f = frames[i];
+      const f = frames[i], p = at(f);
       imgs.forEach((img, k) => {
         img.classList.toggle('on', k === i);
         if (k === i) {
           img.style.transition = 'opacity .7s cubic-bezier(.4,0,.2,1)';
-          img.style.transformOrigin = `${f.x}% ${f.y}%`;
+          img.style.objectPosition = `${f.x}% ${f.y}%`;
+          img.style.transformOrigin = `${p.x}% ${p.y}%`;
           img.style.transform = 'scale(1)';
           if (playing) requestAnimationFrame(() => requestAnimationFrame(() => {
             img.style.transition = `opacity .7s cubic-bezier(.4,0,.2,1), transform ${STEP + 700}ms linear`;
@@ -1323,9 +1337,9 @@ footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;paddin
       cap.classList.add('out');
       timers.push(setTimeout(() => { cap.textContent = f.cap; cap.classList.remove('out'); }, 250));
       // the cursor glides to the point of interest, then clicks
-      timers.push(setTimeout(() => { cursor.style.left = f.x + '%'; cursor.style.top = f.y + '%'; }, 300));
+      timers.push(setTimeout(() => { cursor.style.left = p.x + '%'; cursor.style.top = p.y + '%'; }, 300));
       timers.push(setTimeout(() => {
-        ripple.style.left = f.x + '%'; ripple.style.top = f.y + '%';
+        ripple.style.left = p.x + '%'; ripple.style.top = p.y + '%';
         ripple.classList.remove('go'); void ripple.offsetWidth; ripple.classList.add('go');
       }, 1400));
       if (playing) timers.push(setTimeout(() => show(i + 1), STEP));
